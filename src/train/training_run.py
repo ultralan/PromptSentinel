@@ -1,0 +1,75 @@
+"""单次训练运行的目录和复现产物对象。"""
+
+from __future__ import annotations
+
+import json
+import platform
+import random
+import sys
+from dataclasses import asdict
+from datetime import datetime, timezone
+from pathlib import Path
+from typing import Any
+
+import numpy as np
+import torch
+import transformers
+
+from src.core.config_entity import DataConfig, TrainingConfig
+
+
+class TrainingRun:
+    """管理单次训练的 runs 目录、元数据和 Trainer 状态。"""
+
+    def __init__(self, config: TrainingConfig) -> None:
+        """根据运行配置生成唯一的 UTC 时间戳产物目录。"""
+        timestamp = datetime.now(timezone.utc).strftime("%Y%m%dT%H%M%SZ")
+        self.root_dir = config.run.output_root / f"{timestamp}-{config.run.run_name}"
+        self._config = config
+
+    def initialize(self, data_config: DataConfig, parameter_summary: dict[str, int], dataset_sizes: dict[str, int], device: str) -> None:
+        """创建运行目录并持久化配置、环境、参数量和样本数。"""
+        self.root_dir.mkdir(parents=True, exist_ok=False)
+        self._write_json(asdict(self._config), self.root_dir / "config.json")
+        self._write_json(asdict(data_config), self.root_dir / "data_config.json")
+        self._write_json(
+            {
+                "parameters": parameter_summary,
+                "datasets": dataset_sizes,
+                "device": device,
+                "python": sys.version,
+                "platform": platform.platform(),
+                "torch": torch.__version__,
+                "transformers": transformers.__version__,
+            },
+            self.root_dir / "run_metadata.json",
+        )
+
+    @property
+    def checkpoint_dir(self) -> Path:
+        """返回 Trainer checkpoint 保存目录。"""
+        return self.root_dir / "checkpoints"
+
+    @property
+    def model_dir(self) -> Path:
+        """返回最终模型产物保存目录。"""
+        return self.root_dir / "model"
+
+    def save_state(self, trainer: Any) -> None:
+        """保存 Transformers Trainer 状态，支持中断后追溯。"""
+        trainer.save_state()
+        trainer.state.save_to_json(self.root_dir / "trainer_state.json")
+
+    @staticmethod
+    def set_seed(seed: int) -> None:
+        """统一设置 Python、NumPy、PyTorch 的训练随机种子。"""
+        random.seed(seed)
+        np.random.seed(seed)
+        torch.manual_seed(seed)
+        if torch.cuda.is_available():
+            torch.cuda.manual_seed_all(seed)
+
+    @staticmethod
+    def _write_json(data: Any, path: Path) -> None:
+        """以 UTF-8 格式化 JSON 写入单次运行元数据文件。"""
+        path.write_text(json.dumps(data, ensure_ascii=False, indent=2, default=str) + "\n", encoding="utf-8")

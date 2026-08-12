@@ -1,0 +1,23 @@
+dataset:
+  implementation: promptshield
+  repo_id: hendzh/PromptShield
+  revision: a5234cb1f5cdb256600cab64b8c961195b5e8404
+  files:
+    train: train.json
+    validation: validation.json
+    test: test.json
+
+model:
+  implementation: prompt_guard_2
+  name_or_path: meta-llama/Llama-Prompt-Guard-2-86M
+  revision: main
+  max_length: 512
+
+paths:
+  raw_dir: data/raw/promptshield
+  prepared_dir: data/prepared/promptshield
+  reports_dir: data/reports
+
+preparation:
+  max_overlength_ratio: 0.20
+  overlength_policy: fail

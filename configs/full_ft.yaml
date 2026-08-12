@@ -1,0 +1,25 @@
+data_config: configs/data.yaml
+
+run:
+  mode: full_ft
+  seed: 42
+  output_root: runs
+  run_name: full-ft-seed-42
+
+model:
+  implementation: prompt_guard_2
+  name_or_path: meta-llama/Llama-Prompt-Guard-2-86M
+  revision: main
+  max_length: 512
+
+training:
+  num_train_epochs: 3
+  per_device_train_batch_size: 1
+  per_device_eval_batch_size: 1
+  gradient_accumulation_steps: 16
+  learning_rate: 0.00002
+  weight_decay: 0.01
+  warmup_ratio: 0.05
+  logging_steps: 10
+  save_total_limit: 2
+  early_stopping_patience: 2

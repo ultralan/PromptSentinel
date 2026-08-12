@@ -1,0 +1,14 @@
+.DS_Store
+.venv/
+__pycache__/
+*.py[cod]
+.pytest_cache/
+.ruff_cache/
+
+# 本地下载的数据、预处理结果和分布审计报告不进入版本库。
+data/raw/
+data/prepared/
+data/reports/
+
+# 模型权重、日志和每次运行的配置快照不进入版本库。
+runs/
