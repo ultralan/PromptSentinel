@@ -6,7 +6,7 @@ from typing import Any
 
 from transformers import AutoModelForSequenceClassification, AutoTokenizer
 
-from src.train.sequence_classification_trainer import SequenceClassificationTrainer
+from src.train.model_trainer.sequence_classification_trainer import SequenceClassificationTrainer
 
 
 class PromptGuardTrainer(SequenceClassificationTrainer):

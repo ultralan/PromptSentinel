@@ -2,9 +2,9 @@
 
 from src.core.config_entity import ModelConfig, TrainerConfig
 from src.core.training_entity import ModelImplementation
-from src.train.prompt_guard_trainer import PromptGuardTrainer
-from src.train.protect_ai_deberta_trainer import ProtectAiDebertaTrainer
-from src.train.sequence_classification_trainer import SequenceClassificationTrainer
+from src.train.model_trainer.prompt_guard_trainer import PromptGuardTrainer
+from src.train.model_trainer.protect_ai_deberta_trainer import ProtectAiDebertaTrainer
+from src.train.model_trainer.sequence_classification_trainer import SequenceClassificationTrainer
 
 
 class ModelTrainerFactory:

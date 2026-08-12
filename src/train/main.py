@@ -8,8 +8,8 @@ from pathlib import Path
 from src.core.config_entity import DataConfig, TrainingConfig
 from src.core.execution_log import ExecutionLog
 from src.preprocess.prepared_dataset import PreparedDataset
-from src.train.fine_tuning_strategy import FineTuningStrategyFactory
-from src.train.model_trainer_factory import ModelTrainerFactory
+from src.train.fine_tuning.fine_tuning_strategy import FineTuningStrategyFactory
+from src.train.model_trainer.model_trainer_factory import ModelTrainerFactory
 from src.train.training_job import TrainingJob
 from src.train.training_run import TrainingRun
 

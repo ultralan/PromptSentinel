@@ -9,8 +9,8 @@ from datasets import Dataset
 from src.core.config_entity import DataConfig, TrainingConfig
 from src.core.data_entity import DatasetSplit
 from src.preprocess.prepared_dataset import PreparedDataset
-from src.train.fine_tuning_strategy import FineTuningStrategy
-from src.train.sequence_classification_trainer import SequenceClassificationTrainer
+from src.train.fine_tuning.fine_tuning_strategy import FineTuningStrategy
+from src.train.model_trainer.sequence_classification_trainer import SequenceClassificationTrainer
 from src.train.training_run import TrainingRun
 
 
