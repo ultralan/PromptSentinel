@@ -1,6 +1,6 @@
-# Prompt Guard 2 微调
+# PromptSentinel
 
-在 PromptShield 官方 `train / validation / test` 划分上，比较 Prompt Guard 2 的 LoRA 与全量微调。当前仓库只提供数据准备、训练和模型保存；测试集推理与指标报告后续放在 `src/test/`。
+提示注入旁路检测器微调工程。在 PromptShield 官方 `train / validation / test` 划分上，比较 Prompt Guard 2 的 LoRA 与全量微调。当前仓库只提供数据准备、训练和模型保存；测试集推理与指标报告后续放在 `src/test/`。
 
 ## 目录
 

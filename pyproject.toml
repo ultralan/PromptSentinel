@@ -1,7 +1,7 @@
 [project]
-name = "prompt-guard-ft"
+name = "prompt-sentinel"
 version = "0.1.0"
-description = "Prompt Guard 2 在 PromptShield 上的 LoRA 与全量微调训练骨架"
+description = "PromptSentinel：提示注入旁路检测器的 LoRA 与全量微调工程"
 readme = "README.md"
 requires-python = ">=3.12"
 dependencies = [

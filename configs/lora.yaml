@@ -4,7 +4,7 @@ run:
   mode: lora
   seed: 42
   output_root: runs
-  run_name: lora-seed-42
+  run_name: prompt-sentinel-lora-seed-42
 
 model:
   implementation: prompt_guard_2

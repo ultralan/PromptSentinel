@@ -1,1 +1,1 @@
-"""Prompt Guard 2 微调工程。"""
+"""PromptSentinel：提示注入旁路检测器微调工程。"""

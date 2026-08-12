@@ -4,7 +4,7 @@ run:
   mode: full_ft
   seed: 42
   output_root: runs
-  run_name: full-ft-seed-42
+  run_name: prompt-sentinel-full-ft-seed-42
 
 model:
   implementation: prompt_guard_2
