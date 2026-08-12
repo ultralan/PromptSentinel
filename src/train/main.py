@@ -6,6 +6,7 @@ import argparse
 from pathlib import Path
 
 from src.core.config_entity import DataConfig, TrainingConfig
+from src.core.execution_log import ExecutionLog
 from src.preprocess.prepared_dataset import PreparedDataset
 from src.train.fine_tuning_strategy import FineTuningStrategyFactory
 from src.train.prompt_guard_trainer import PromptGuardTrainer
@@ -21,17 +22,18 @@ def main() -> None:
     parser = argparse.ArgumentParser(description="训练 Prompt Guard 2")
     parser.add_argument("--config", required=True)
     args = parser.parse_args()
-    training_config = TrainingConfig.from_yaml(Path(args.config), PROJECT_ROOT)
-    data_config = DataConfig.from_yaml(training_config.data_config_path, PROJECT_ROOT)
-    job = TrainingJob(
-        training_config,
-        data_config,
-        PreparedDataset(data_config.paths.prepared_dir),
-        PromptGuardTrainer(training_config.model, training_config.trainer),
-        FineTuningStrategyFactory.create(training_config),
-        TrainingRun(training_config),
-    )
-    job.run()
+    with ExecutionLog(PROJECT_ROOT, "train"):
+        training_config = TrainingConfig.from_yaml(Path(args.config), PROJECT_ROOT)
+        data_config = DataConfig.from_yaml(training_config.data_config_path, PROJECT_ROOT)
+        job = TrainingJob(
+            training_config,
+            data_config,
+            PreparedDataset(data_config.paths.prepared_dir),
+            PromptGuardTrainer(training_config.model, training_config.trainer),
+            FineTuningStrategyFactory.create(training_config),
+            TrainingRun(training_config),
+        )
+        job.run()
 
 
 if __name__ == "__main__":

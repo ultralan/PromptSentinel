@@ -6,6 +6,7 @@ import argparse
 from pathlib import Path
 
 from src.core.config_entity import DataConfig
+from src.core.execution_log import ExecutionLog
 from src.preprocess.data_preprocessor import DataPreprocessor
 from src.preprocess.prepared_dataset import PreparedDataset
 from src.preprocess.promptshield_dataset import PromptShieldDataset
@@ -19,10 +20,11 @@ def main() -> None:
     parser = argparse.ArgumentParser(description="下载并预处理 PromptShield")
     parser.add_argument("--config", required=True)
     args = parser.parse_args()
-    config = DataConfig.from_yaml(Path(args.config), PROJECT_ROOT)
-    source = PromptShieldDataset(config.dataset, config.paths.raw_dir)
-    prepared = PreparedDataset(config.paths.prepared_dir)
-    DataPreprocessor(config, source, prepared).run()
+    with ExecutionLog(PROJECT_ROOT, "preprocess"):
+        config = DataConfig.from_yaml(Path(args.config), PROJECT_ROOT)
+        source = PromptShieldDataset(config.dataset, config.paths.raw_dir)
+        prepared = PreparedDataset(config.paths.prepared_dir)
+        DataPreprocessor(config, source, prepared).run()
 
 
 if __name__ == "__main__":

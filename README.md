@@ -27,4 +27,6 @@ uv run python -m src.train.main --config configs/full_ft.yaml
 
 `prepare_data` 会下载 PromptShield 的固定 revision，检查 split 泄漏，并按 Prompt Guard 2 tokenizer 生成长度审计。若 `train` 或 `validation` 的超长样本占比高于配置门槛，命令会停止，不会静默修改训练语义。
 
+所有模块的终端输出、第三方库日志和异常堆栈都会写入 `logs/<模块>/<UTC 时间戳>.log`。训练运行产物仍保存在 `runs/`。
+
 Meta Prompt Guard 2 是 gated 模型。首次实际运行前，需在 Hugging Face 接受模型许可并完成本机登录。
