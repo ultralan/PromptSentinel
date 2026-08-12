@@ -10,7 +10,7 @@ from src.core.config_entity import DataConfig, TrainingConfig
 from src.core.data_entity import DatasetSplit
 from src.preprocess.prepared_dataset import PreparedDataset
 from src.train.fine_tuning_strategy import FineTuningStrategy
-from src.train.prompt_guard_trainer import PromptGuardTrainer
+from src.train.sequence_classification_trainer import SequenceClassificationTrainer
 from src.train.training_run import TrainingRun
 
 
@@ -22,7 +22,7 @@ class TrainingJob:
         config: TrainingConfig,
         data_config: DataConfig,
         prepared_dataset: PreparedDataset,
-        prompt_guard_trainer: PromptGuardTrainer,
+        model_trainer: SequenceClassificationTrainer,
         strategy: FineTuningStrategy,
         training_run: TrainingRun,
     ) -> None:
@@ -30,7 +30,7 @@ class TrainingJob:
         self._config = config
         self._data_config = data_config
         self._prepared_dataset = prepared_dataset
-        self._prompt_guard_trainer = prompt_guard_trainer
+        self._model_trainer = model_trainer
         self._strategy = strategy
         self._training_run = training_run
 
@@ -40,19 +40,19 @@ class TrainingJob:
         if manifest.max_length != self._config.model.max_length:
             raise ValueError("prepared manifest 与训练模型的 max_length 不一致")
         TrainingRun.set_seed(self._config.run.seed)
-        tokenizer = self._prompt_guard_trainer.load_tokenizer()
-        base_model = self._prompt_guard_trainer.load_base_model()
+        tokenizer = self._model_trainer.load_tokenizer()
+        base_model = self._model_trainer.load_base_model()
         model = self._strategy.prepare_model(base_model)
         train_dataset = self._to_hf_dataset(self._prepared_dataset.load_training_split(DatasetSplit.TRAIN), tokenizer)
         validation_dataset = self._to_hf_dataset(self._prepared_dataset.load_training_split(DatasetSplit.VALIDATION), tokenizer)
-        device = self._prompt_guard_trainer.select_device()
+        device = self._model_trainer.select_device()
         self._training_run.initialize(
             self._data_config,
             self._parameter_summary(model),
             {"train": len(train_dataset), "validation": len(validation_dataset)},
             device,
         )
-        trainer = self._prompt_guard_trainer.create_trainer(
+        trainer = self._model_trainer.create_trainer(
             model, tokenizer, train_dataset, validation_dataset, self._training_run.checkpoint_dir, device,
         )
         trainer.train()

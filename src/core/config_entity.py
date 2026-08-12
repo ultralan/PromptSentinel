@@ -8,7 +8,7 @@ from typing import Any
 
 import yaml
 
-from src.core.training_entity import TrainingMode
+from src.core.training_entity import ModelImplementation, TrainingMode
 
 
 def _load_mapping(path: Path) -> dict[str, Any]:
@@ -29,7 +29,7 @@ def _resolve(path: str, project_root: Path) -> Path:
 @dataclass(frozen=True)
 class ModelConfig:
     """模型标识、版本和最大输入长度配置。"""
-    implementation: str
+    implementation: ModelImplementation
     name_or_path: str
     revision: str
     max_length: int
@@ -38,7 +38,7 @@ class ModelConfig:
     def from_mapping(cls, data: dict[str, Any]) -> "ModelConfig":
         """从 YAML 模型节点构建强类型配置。"""
         return cls(
-            implementation=str(data["implementation"]),
+            implementation=ModelImplementation(str(data["implementation"])),
             name_or_path=str(data["name_or_path"]),
             revision=str(data["revision"]),
             max_length=int(data["max_length"]),

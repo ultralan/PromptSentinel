@@ -8,9 +8,9 @@ dataset:
     test: test.json
 
 model:
-  implementation: prompt_guard_2
-  name_or_path: meta-llama/Llama-Prompt-Guard-2-86M
-  revision: main
+  implementation: protect_ai_deberta_v2
+  name_or_path: protectai/deberta-v3-base-prompt-injection-v2
+  revision: 89b085cd330414d3e7d9dd787870f315957e1e9f
   max_length: 512
 
 paths:
