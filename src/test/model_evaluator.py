@@ -41,12 +41,18 @@ class ModelEvaluator:
         stage_name: str,
     ) -> list[float]:
         """用已加载模型计算风险正类概率，并定期记录本地推理进度。"""
-        probabilities: list[float] = []
         batch_size = self._config.evaluation.per_device_batch_size
-        total_batches = (len(records) + batch_size - 1) // batch_size
+        # 按预处理时审计的长度分桶，可减少动态 padding 的无效计算；最后仍写回原记录顺序。
+        ordered_indices = sorted(
+            range(len(records)),
+            key=lambda index: records[index].token_length if records[index].token_length is not None else self._config.model.max_length,
+        )
+        probabilities: list[float] = [0.0] * len(records)
+        total_batches = (len(ordered_indices) + batch_size - 1) // batch_size
         with torch.inference_mode():
-            for start in range(0, len(records), batch_size):
-                batch = records[start : start + batch_size]
+            for start in range(0, len(ordered_indices), batch_size):
+                batch_indices = ordered_indices[start : start + batch_size]
+                batch = [records[index] for index in batch_indices]
                 inputs = tokenizer(
                     [record.text for record in batch],
                     truncation=True,
@@ -55,9 +61,11 @@ class ModelEvaluator:
                     return_tensors="pt",
                 )
                 logits = model(**{name: value.to(device) for name, value in inputs.items()}).logits
-                probabilities.extend(torch.softmax(logits, dim=-1)[:, 1].detach().cpu().tolist())
+                batch_probabilities = torch.softmax(logits, dim=-1)[:, 1].detach().cpu().tolist()
+                for index, probability in zip(batch_indices, batch_probabilities, strict=True):
+                    probabilities[index] = probability
                 batch_index = start // batch_size + 1
-                if batch_index == 1 or batch_index % 100 == 0 or batch_index == total_batches:
+                if batch_index == 1 or batch_index % 10 == 0 or batch_index == total_batches:
                     logging.getLogger(__name__).info(
                         "%s 推理进度: %s/%s batches (%s/%s samples)",
                         stage_name,
