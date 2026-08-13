@@ -8,4 +8,4 @@
 
 `src/core/data_contracts.py` 定义 `text_classification/v1`：每行固定为 `id`、`text`、`label`、`token_length`。`src/preprocess` 负责生成该接口，训练层只读取该接口，不读取原始文件，也不依赖数据集的字段名或下载方式。
 
-训练代码不读取 test split；test 仅在后续 `src/test/` 中使用。
+训练代码不读取 test split；test split 仅在后续 `src/evaluate/` 中使用。

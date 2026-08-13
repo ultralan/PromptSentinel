@@ -1,4 +1,4 @@
-"""在独立 prepared test split 上完成多候选模型的公平评测。"""
+"""在独立 prepared test split 上完成多候选模型的公平评估。"""
 
 from __future__ import annotations
 
@@ -8,13 +8,13 @@ from pathlib import Path
 from src.core.config_entity import DataConfig, EvaluationCandidateConfig, EvaluationConfig
 from src.core.data_entity import ClassificationRecord, DatasetSplit
 from src.preprocess.prepared_dataset import PreparedDataset
-from src.test.evaluation_run import EvaluationRun
-from src.test.metrics import BinaryMetrics
-from src.test.model_evaluator import ModelEvaluator
+from src.evaluate.evaluation_run import EvaluationRun
+from src.evaluate.metrics import BinaryMetrics
+from src.evaluate.model_evaluator import ModelEvaluator
 from src.train.model_trainer.sequence_classification_trainer import SequenceClassificationTrainer
 
 
-class TestJob:
+class EvaluationJob:
     """按统一验证阈值和独立测试集，比较基座与所有训练候选。"""
 
     def __init__(
