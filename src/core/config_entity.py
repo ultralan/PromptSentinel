@@ -8,7 +8,7 @@ from typing import Any
 
 import yaml
 
-from src.core.training_entity import ModelImplementation, TrainingMode
+from src.core.training_entity import ModelArtifactType, ModelImplementation, TrainingMode
 
 
 def _load_mapping(path: Path) -> dict[str, Any]:
@@ -199,4 +199,88 @@ class TrainingConfig:
             model=ModelConfig.from_mapping(data["model"]),
             trainer=TrainerConfig.from_mapping(data["training"]),
             lora=lora,
+        )
+
+
+@dataclass(frozen=True)
+class EvaluationRunConfig:
+    """单次离线评测的结果目录配置。"""
+
+    output_root: Path
+    run_name: str
+
+
+@dataclass(frozen=True)
+class EvaluationSettings:
+    """所有候选模型共享的推理批大小与阈值校准目标。"""
+
+    per_device_batch_size: int
+    target_false_positive_rate: float
+
+    @classmethod
+    def from_mapping(cls, data: dict[str, Any]) -> "EvaluationSettings":
+        """从 YAML evaluation 节点构建评测运行参数。"""
+        batch_size = int(data["per_device_batch_size"])
+        target_fpr = float(data["target_false_positive_rate"])
+        if batch_size < 1:
+            raise ValueError("evaluation.per_device_batch_size 必须大于 0")
+        if not 0 < target_fpr < 1:
+            raise ValueError("evaluation.target_false_positive_rate 必须在 (0, 1) 内")
+        return cls(per_device_batch_size=batch_size, target_false_positive_rate=target_fpr)
+
+
+@dataclass(frozen=True)
+class EvaluationCandidateConfig:
+    """一个待比较的基座、LoRA adapter 或全量微调模型。"""
+
+    name: str
+    artifact_type: ModelArtifactType
+    path: Path | None
+
+    @classmethod
+    def from_mapping(cls, data: dict[str, Any], project_root: Path) -> "EvaluationCandidateConfig":
+        """从 YAML candidate 节点构建并校验候选模型定义。"""
+        artifact_type = ModelArtifactType(str(data["artifact_type"]))
+        raw_path = data.get("path")
+        if artifact_type is ModelArtifactType.BASE:
+            if raw_path is not None:
+                raise ValueError("base 候选不应提供 path")
+            path = None
+        else:
+            if not isinstance(raw_path, str) or not raw_path.strip():
+                raise ValueError(f"{artifact_type.value} 候选必须提供 path")
+            path = _resolve(raw_path, project_root)
+        return cls(name=str(data["name"]), artifact_type=artifact_type, path=path)
+
+
+@dataclass(frozen=True)
+class EvaluationConfig:
+    """测试模块运行所需的固定数据版本、模型身份与候选清单。"""
+
+    data_config_path: Path
+    model: ModelConfig
+    run: EvaluationRunConfig
+    evaluation: EvaluationSettings
+    candidates: list[EvaluationCandidateConfig]
+
+    @classmethod
+    def from_yaml(cls, path: Path, project_root: Path) -> "EvaluationConfig":
+        """加载评测 YAML，并拒绝空候选或重复候选名称。"""
+        data = _load_mapping(path)
+        run = data["run"]
+        candidates = [EvaluationCandidateConfig.from_mapping(item, project_root) for item in data["candidates"]]
+        names = [candidate.name for candidate in candidates]
+        if not candidates:
+            raise ValueError("评测至少需要一个候选模型")
+        if len(set(names)) != len(names):
+            raise ValueError("评测候选 name 必须唯一")
+        return cls(
+            data_config_path=_resolve(str(data["data_config"]), project_root),
+            model=ModelConfig.from_mapping(data["model"]),
+            run=EvaluationRunConfig(
+                output_root=_resolve(str(run["output_root"]), project_root),
+                run_name=str(run["run_name"]),
+            ),
+            evaluation=EvaluationSettings.from_mapping(data["evaluation"]),
+            candidates=candidates,
         )

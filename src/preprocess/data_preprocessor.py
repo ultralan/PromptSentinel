@@ -50,7 +50,8 @@ class DataPreprocessor:
     ) -> dict[DatasetSplit, list[ClassificationRecord]]:
         """使用目标模型 tokenizer 为每条标准记录补充未截断 token 长度。"""
         model = self._config.model
-        tokenizer = AutoTokenizer.from_pretrained(model.name_or_path, revision=model.revision, use_fast=True)
+        # 必须与训练器的 Protect AI DeBERTa tokenizer 实现一致，避免边界长度样本在预处理和训练时漂移。
+        tokenizer = AutoTokenizer.from_pretrained(model.name_or_path, revision=model.revision, use_fast=False)
         return {
             split: [
                 replace(record, token_length=len(tokenizer(record.text, add_special_tokens=True, truncation=False)["input_ids"]))
@@ -124,11 +125,13 @@ class DataPreprocessor:
             raise RuntimeError(f"超长样本比例超过门槛，已写入 {audit_path}: {ratios}")
 
     def _write_prepared(self, records: dict[DatasetSplit, list[ClassificationRecord]], audit_path: Path) -> None:
-        """过滤超长训练记录，并写出标准 manifest 与 JSONL split。"""
+        """过滤超长训练记录，保留完整独立测试集并写出 prepared 数据。"""
         selected = {
             split: [record for record in records[split] if record.token_length is not None and record.token_length <= self._config.model.max_length]
             for split in TRAINING_SPLITS
         }
+        # 测试集不因长度被筛掉，推理时以同一 max_length 截断，避免静默改变官方评测分布。
+        selected[DatasetSplit.TEST] = records[DatasetSplit.TEST]
         manifest = PreparedDatasetManifest(
             schema_version=1,
             task="text_classification",

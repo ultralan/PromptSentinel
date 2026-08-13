@@ -16,3 +16,11 @@ class ModelImplementation(StrEnum):
 
     PROMPT_GUARD_2 = "prompt_guard_2"
     PROTECT_AI_DEBERTA_V2 = "protect_ai_deberta_v2"
+
+
+class ModelArtifactType(StrEnum):
+    """评测候选模型的产物形态。"""
+
+    BASE = "base"
+    LORA_ADAPTER = "lora_adapter"
+    FULL_FINE_TUNED = "full_fine_tuned"

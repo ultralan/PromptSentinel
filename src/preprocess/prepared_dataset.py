@@ -40,6 +40,14 @@ class PreparedDataset:
         """读取 train 或 validation 标准记录，拒绝读取 test。"""
         if split not in TRAINING_SPLITS:
             raise ValueError(f"训练模块不能读取 {split.value} split")
+        return self._load_split(split)
+
+    def load_test_split(self) -> list[ClassificationRecord]:
+        """读取独立 test 标准记录，仅供评测模块消费。"""
+        return self._load_split(DatasetSplit.TEST)
+
+    def _load_split(self, split: DatasetSplit) -> list[ClassificationRecord]:
+        """读取并校验 manifest 中声明的任一标准 split。"""
         manifest = self.load_manifest()
         metadata = manifest.splits.get(split)
         if metadata is None:

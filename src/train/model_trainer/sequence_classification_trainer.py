@@ -16,8 +16,8 @@ from src.core.config_entity import ModelConfig, TrainerConfig
 class SequenceClassificationTrainer(ABC):
     """封装任意二分类序列分类基座的加载和 Trainer 创建。"""
 
-    def __init__(self, model_config: ModelConfig, trainer_config: TrainerConfig) -> None:
-        """绑定不可变的模型身份与通用训练超参数。"""
+    def __init__(self, model_config: ModelConfig, trainer_config: TrainerConfig | None = None) -> None:
+        """绑定模型身份；仅训练场景额外绑定 Trainer 超参数。"""
         self._model_config = model_config
         self._trainer_config = trainer_config
 
@@ -41,6 +41,8 @@ class SequenceClassificationTrainer(ABC):
         device: str,
     ) -> Trainer:
         """按统一训练口径创建带动态 padding 和早停的 Trainer。"""
+        if self._trainer_config is None:
+            raise RuntimeError("评测加载器不能创建 Transformers Trainer")
         config = self._trainer_config
         total_steps = self._total_optimization_steps(train_dataset)
         arguments = TrainingArguments(
@@ -75,6 +77,8 @@ class SequenceClassificationTrainer(ABC):
 
     def _total_optimization_steps(self, train_dataset: Any) -> int:
         """按批大小和梯度累积计算当前训练配置的总优化器更新次数。"""
+        if self._trainer_config is None:
+            raise RuntimeError("评测加载器不能计算训练优化步数")
         config = self._trainer_config
         batches_per_epoch = ceil(len(train_dataset) / config.per_device_train_batch_size)
         updates_per_epoch = ceil(batches_per_epoch / config.gradient_accumulation_steps)

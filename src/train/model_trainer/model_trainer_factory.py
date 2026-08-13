@@ -11,7 +11,7 @@ class ModelTrainerFactory:
     """根据强类型模型实现标识创建对应的序列分类训练器。"""
 
     @staticmethod
-    def create(model_config: ModelConfig, trainer_config: TrainerConfig) -> SequenceClassificationTrainer:
+    def create(model_config: ModelConfig, trainer_config: TrainerConfig | None = None) -> SequenceClassificationTrainer:
         """在唯一映射点选择模型专属加载和校验实现。"""
         if model_config.implementation is ModelImplementation.PROMPT_GUARD_2:
             return PromptGuardTrainer(model_config, trainer_config)

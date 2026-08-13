@@ -1,6 +1,6 @@
 # PromptSentinel
 
-提示注入旁路检测器微调工程。在 PromptShield 官方 `train / validation / test` 划分上，比较序列分类模型的 LoRA 与全量微调。当前默认基座为 Protect AI 的开放 `deberta-v3-base-prompt-injection-v2`；测试集推理与指标报告后续放在 `src/test/`。
+提示注入旁路检测器微调工程。在 PromptShield 官方 `train / validation / test` 划分上，比较序列分类模型的 LoRA 与全量微调。当前默认基座为 Protect AI 的开放 `deberta-v3-base-prompt-injection-v2`。
 
 ## 目录
 
@@ -21,10 +21,13 @@ uv sync
 uv run python -m src.preprocess.main --config configs/data.yaml
 uv run python -m src.train.main --config configs/lora.yaml
 uv run python -m src.train.main --config configs/full_ft.yaml
+uv run python -m src.test.main --config configs/test.yaml
 ```
 
 `prepare_data` 会下载 PromptShield 的固定 revision，检查 split 泄漏，并按当前配置的模型 tokenizer 生成长度审计。若 `train` 或 `validation` 的超长样本占比高于配置门槛，命令会停止，不会静默修改训练语义。
 
-训练的终端输出、第三方库日志和异常堆栈会与 checkpoint、配置快照一起写入 `runs/<运行标识>/train.log`。预处理和测试日志分别写入 `logs/preprocess/execution.log` 与 `logs/test/execution.log`。
+训练和测试的终端输出、第三方库日志和异常堆栈会与各自的配置快照和结果一起写入 `runs/<运行标识>/`。预处理日志写入 `logs/preprocess/execution.log`。
+
+测试统一在 validation 的良性样本上校准目标 FPR 阈值，随后固定该阈值在独立官方 test split 上比较所有候选。每次评测保存 `metrics.json`（AUC-ROC、AP、FPR、Recall 与混淆矩阵）和每个候选的逐样本 `predictions/*.jsonl`。`configs/test.yaml` 默认比较基座和当前 LoRA adapter；加入完整微调结果时只需增加一个 `full_fine_tuned` 候选。
 
 当前默认的 Protect AI 基座为开放模型。Meta Prompt Guard 2 仍保留为可选实现；恢复访问后只需切换 YAML 的 `model.implementation`、`name_or_path` 和 `revision`。
