@@ -45,11 +45,17 @@ class PreparedDataset:
         if metadata is None:
             raise ValueError(f"prepared manifest 不包含 {split.value}")
         path = self._root_dir / metadata.path
-        records = [
-            self._parse_record(json.loads(line), split, index)
-            for index, line in enumerate(path.read_text(encoding="utf-8").splitlines())
-            if line.strip()
-        ]
+        records = []
+        # JSONL 只允许物理换行分隔记录；str.splitlines() 会误拆文本中的 Unicode 行分隔符。
+        with path.open("r", encoding="utf-8") as handle:
+            for index, line in enumerate(handle):
+                if not line.strip():
+                    continue
+                try:
+                    row = json.loads(line)
+                except json.JSONDecodeError as error:
+                    raise ValueError(f"{split.value} JSONL 第 {index + 1} 行格式错误") from error
+                records.append(self._parse_record(row, split, index))
         if len(records) != metadata.count:
             raise ValueError(f"{split.value} 行数与 manifest 不一致")
         return records

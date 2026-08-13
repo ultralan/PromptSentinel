@@ -12,8 +12,9 @@ dependencies = [
     "peft>=0.14.0",
     "pyyaml>=6.0.2",
     "safetensors>=0.4.5",
+    "sentencepiece>=0.2.0",
     "torch>=2.5.0",
-    "transformers>=4.47.0",
+    "transformers>=4.47.0,<5.0.0",
 ]
 
 [tool.uv]

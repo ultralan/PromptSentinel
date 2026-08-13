@@ -3,6 +3,7 @@
 from __future__ import annotations
 
 from abc import ABC, abstractmethod
+from math import ceil
 from pathlib import Path
 from typing import Any
 
@@ -41,6 +42,7 @@ class SequenceClassificationTrainer(ABC):
     ) -> Trainer:
         """按统一训练口径创建带动态 padding 和早停的 Trainer。"""
         config = self._trainer_config
+        total_steps = self._total_optimization_steps(train_dataset)
         arguments = TrainingArguments(
             output_dir=str(checkpoint_dir),
             num_train_epochs=config.num_train_epochs,
@@ -49,7 +51,7 @@ class SequenceClassificationTrainer(ABC):
             gradient_accumulation_steps=config.gradient_accumulation_steps,
             learning_rate=config.learning_rate,
             weight_decay=config.weight_decay,
-            warmup_ratio=config.warmup_ratio,
+            warmup_steps=ceil(total_steps * config.warmup_ratio),
             logging_steps=config.logging_steps,
             eval_strategy="epoch",
             save_strategy="epoch",
@@ -58,7 +60,6 @@ class SequenceClassificationTrainer(ABC):
             greater_is_better=False,
             save_total_limit=config.save_total_limit,
             report_to="none",
-            use_mps_device=device == "mps",
             fp16=False,
             bf16=False,
             optim="adamw_torch",
@@ -71,6 +72,13 @@ class SequenceClassificationTrainer(ABC):
             data_collator=DataCollatorWithPadding(tokenizer=tokenizer),
             callbacks=[EarlyStoppingCallback(early_stopping_patience=config.early_stopping_patience)],
         )
+
+    def _total_optimization_steps(self, train_dataset: Any) -> int:
+        """按批大小和梯度累积计算当前训练配置的总优化器更新次数。"""
+        config = self._trainer_config
+        batches_per_epoch = ceil(len(train_dataset) / config.per_device_train_batch_size)
+        updates_per_epoch = ceil(batches_per_epoch / config.gradient_accumulation_steps)
+        return ceil(updates_per_epoch * config.num_train_epochs)
 
     @staticmethod
     def select_device() -> str:
