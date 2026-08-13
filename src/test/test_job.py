@@ -64,7 +64,10 @@ class TestJob:
         test_records: list[ClassificationRecord],
     ) -> dict:
         """校准一个候选模型，并保存其独立测试预测与汇总指标。"""
-        validation_scores = self._model_evaluator.predict(candidate, validation_records)
+        tokenizer, model, device = self._model_evaluator.load(candidate)
+        validation_scores = self._model_evaluator.predict(
+            tokenizer, model, device, validation_records, f"{candidate.name}/validation",
+        )
         threshold = BinaryMetrics.calibrate_threshold(
             [record.label for record in validation_records],
             validation_scores,
@@ -73,7 +76,7 @@ class TestJob:
         validation_metrics = BinaryMetrics.evaluate(
             [record.label for record in validation_records], validation_scores, threshold,
         )
-        test_scores = self._model_evaluator.predict(candidate, test_records)
+        test_scores = self._model_evaluator.predict(tokenizer, model, device, test_records, f"{candidate.name}/test")
         test_metrics = BinaryMetrics.evaluate([record.label for record in test_records], test_scores, threshold)
         self._write_predictions(candidate.name, test_records, test_scores, threshold)
         return {

@@ -2,6 +2,8 @@
 
 from __future__ import annotations
 
+import logging
+from collections.abc import Callable
 from typing import Any
 
 import torch
@@ -21,15 +23,27 @@ class ModelEvaluator:
         self._config = config
         self._model_trainer = model_trainer
 
-    def predict(self, candidate: EvaluationCandidateConfig, records: list[ClassificationRecord]) -> list[float]:
-        """计算候选模型对每条记录为风险正类的 softmax 概率。"""
+    def load(self, candidate: EvaluationCandidateConfig) -> tuple[Any, Any, str]:
+        """加载一个候选模型及 tokenizer，并切换到当前可用推理设备。"""
         tokenizer = self._model_trainer.load_tokenizer()
         model = self._load_model(candidate)
         device = self._model_trainer.select_device()
         model.to(device)
         model.eval()
+        return tokenizer, model, device
+
+    def predict(
+        self,
+        tokenizer: Any,
+        model: Any,
+        device: str,
+        records: list[ClassificationRecord],
+        stage_name: str,
+    ) -> list[float]:
+        """用已加载模型计算风险正类概率，并定期记录本地推理进度。"""
         probabilities: list[float] = []
         batch_size = self._config.evaluation.per_device_batch_size
+        total_batches = (len(records) + batch_size - 1) // batch_size
         with torch.inference_mode():
             for start in range(0, len(records), batch_size):
                 batch = records[start : start + batch_size]
@@ -42,6 +56,16 @@ class ModelEvaluator:
                 )
                 logits = model(**{name: value.to(device) for name, value in inputs.items()}).logits
                 probabilities.extend(torch.softmax(logits, dim=-1)[:, 1].detach().cpu().tolist())
+                batch_index = start // batch_size + 1
+                if batch_index == 1 or batch_index % 100 == 0 or batch_index == total_batches:
+                    logging.getLogger(__name__).info(
+                        "%s 推理进度: %s/%s batches (%s/%s samples)",
+                        stage_name,
+                        batch_index,
+                        total_batches,
+                        min(start + batch_size, len(records)),
+                        len(records),
+                    )
         return probabilities
 
     def _load_model(self, candidate: EvaluationCandidateConfig) -> Any:
