@@ -3,9 +3,7 @@
 from __future__ import annotations
 
 import logging
-import sys
 from contextlib import redirect_stderr, redirect_stdout
-from datetime import datetime, timezone
 from pathlib import Path
 from types import TracebackType
 from typing import TextIO
@@ -14,10 +12,9 @@ from typing import TextIO
 class ExecutionLog:
     """捕获标准输出、标准错误和 Python 日志到单个模块执行日志文件。"""
 
-    def __init__(self, project_root: Path, module: str) -> None:
-        """创建模块专属、带 UTC 时间戳的日志文件路径。"""
-        timestamp = datetime.now(timezone.utc).strftime("%Y%m%dT%H%M%SZ")
-        self.path = project_root / "logs" / module / f"{timestamp}.log"
+    def __init__(self, path: Path) -> None:
+        """绑定调用方确定的单次执行日志文件路径。"""
+        self.path = path
         self._handle: TextIO | None = None
         self._stdout_redirect = None
         self._stderr_redirect = None

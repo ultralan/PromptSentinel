@@ -25,6 +25,6 @@ uv run python -m src.train.main --config configs/full_ft.yaml
 
 `prepare_data` 会下载 PromptShield 的固定 revision，检查 split 泄漏，并按当前配置的模型 tokenizer 生成长度审计。若 `train` 或 `validation` 的超长样本占比高于配置门槛，命令会停止，不会静默修改训练语义。
 
-所有模块的终端输出、第三方库日志和异常堆栈都会写入 `logs/<模块>/<UTC 时间戳>.log`。训练运行产物仍保存在 `runs/`。
+训练的终端输出、第三方库日志和异常堆栈会与 checkpoint、配置快照一起写入 `runs/<运行标识>/train.log`。预处理和测试日志分别写入 `logs/preprocess/execution.log` 与 `logs/test/execution.log`。
 
 当前默认的 Protect AI 基座为开放模型。Meta Prompt Guard 2 仍保留为可选实现；恢复访问后只需切换 YAML 的 `model.implementation`、`name_or_path` 和 `revision`。

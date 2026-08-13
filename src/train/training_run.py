@@ -27,9 +27,14 @@ class TrainingRun:
         self.root_dir = config.run.output_root / f"{timestamp}-{config.run.run_name}"
         self._config = config
 
-    def initialize(self, data_config: DataConfig, parameter_summary: dict[str, int], dataset_sizes: dict[str, int], device: str) -> None:
-        """创建运行目录并持久化配置、环境、参数量和样本数。"""
+    def create_root_dir(self) -> None:
+        """在模型加载前创建唯一运行目录，使首行日志也归属本次运行。"""
         self.root_dir.mkdir(parents=True, exist_ok=False)
+
+    def initialize(self, data_config: DataConfig, parameter_summary: dict[str, int], dataset_sizes: dict[str, int], device: str) -> None:
+        """持久化配置、环境、参数量和样本数。"""
+        if not self.root_dir.is_dir():
+            raise RuntimeError(f"训练运行目录尚未创建: {self.root_dir}")
         self._write_json(asdict(self._config), self.root_dir / "config.json")
         self._write_json(asdict(data_config), self.root_dir / "data_config.json")
         self._write_json(
@@ -54,6 +59,11 @@ class TrainingRun:
     def model_dir(self) -> Path:
         """返回最终模型产物保存目录。"""
         return self.root_dir / "model"
+
+    @property
+    def log_path(self) -> Path:
+        """返回与 checkpoint、配置快照同目录的训练日志路径。"""
+        return self.root_dir / "train.log"
 
     def save_state(self, trainer: Any) -> None:
         """保存 Transformers Trainer 状态，支持中断后追溯。"""

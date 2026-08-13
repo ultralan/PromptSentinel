@@ -11,7 +11,7 @@ PROJECT_ROOT = Path(__file__).resolve().parents[2]
 
 def main() -> None:
     """启动后续测试任务。"""
-    with ExecutionLog(PROJECT_ROOT, "test"):
+    with ExecutionLog(PROJECT_ROOT / "logs" / "test" / "execution.log"):
         TestJob().run()
 
 

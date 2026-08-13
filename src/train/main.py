@@ -22,8 +22,10 @@ def main() -> None:
     parser = argparse.ArgumentParser(description="训练提示注入分类模型")
     parser.add_argument("--config", required=True)
     args = parser.parse_args()
-    with ExecutionLog(PROJECT_ROOT, "train"):
-        training_config = TrainingConfig.from_yaml(Path(args.config), PROJECT_ROOT)
+    training_config = TrainingConfig.from_yaml(Path(args.config), PROJECT_ROOT)
+    training_run = TrainingRun(training_config)
+    training_run.create_root_dir()
+    with ExecutionLog(training_run.log_path):
         data_config = DataConfig.from_yaml(training_config.data_config_path, PROJECT_ROOT)
         job = TrainingJob(
             training_config,
@@ -31,7 +33,7 @@ def main() -> None:
             PreparedDataset(data_config.paths.prepared_dir),
             ModelTrainerFactory.create(training_config.model, training_config.trainer),
             FineTuningStrategyFactory.create(training_config),
-            TrainingRun(training_config),
+            training_run,
         )
         job.run()
 
