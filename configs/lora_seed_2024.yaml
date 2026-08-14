@@ -1,0 +1,33 @@
+data_config: configs/data.yaml
+
+run:
+  mode: lora
+  seed: 2024
+  output_root: runs
+  run_name: prompt-sentinel-lora-seed-2024
+
+model:
+  implementation: protect_ai_deberta_v2
+  name_or_path: protectai/deberta-v3-base-prompt-injection-v2
+  revision: 89b085cd330414d3e7d9dd787870f315957e1e9f
+  max_length: 512
+
+lora:
+  r: 16
+  alpha: 32
+  dropout: 0.05
+  target_modules: all-linear
+  modules_to_save:
+    - classifier
+
+training:
+  num_train_epochs: 3
+  per_device_train_batch_size: 1
+  per_device_eval_batch_size: 1
+  gradient_accumulation_steps: 16
+  learning_rate: 0.0002
+  weight_decay: 0.01
+  warmup_ratio: 0.05
+  logging_steps: 10
+  save_total_limit: 2
+  early_stopping_patience: 2
