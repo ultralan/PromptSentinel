@@ -1,4 +1,4 @@
-"""根据 Transformers Trainer 状态生成训练曲线。"""
+"""根据 Transformers Trainer 状态绘制训练曲线。"""
 
 from __future__ import annotations
 
@@ -13,8 +13,8 @@ matplotlib.use("Agg")
 import matplotlib.pyplot as plt
 
 
-class TrainingCurveReport:
-    """只读取单次训练运行，生成可追溯的损失曲线报告。"""
+class TrainingCurveVisualizer:
+    """只读取单次训练运行，生成可追溯的损失曲线。"""
 
     def render(self, run_dir: Path) -> Path:
         """从 trainer_state.json 提取训练与验证 loss 并写入图像和元数据。"""

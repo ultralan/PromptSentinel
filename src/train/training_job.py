@@ -11,8 +11,8 @@ from src.core.data_entity import DatasetSplit
 from src.preprocess.prepared_dataset import PreparedDataset
 from src.train.fine_tuning.fine_tuning_strategy import FineTuningStrategy
 from src.train.model_trainer.sequence_classification_trainer import SequenceClassificationTrainer
-from src.train.report.training_curve_report import TrainingCurveReport
 from src.train.training_run import TrainingRun
+from src.train.visualization.training_curve_visualizer import TrainingCurveVisualizer
 
 
 class TrainingJob:
@@ -59,7 +59,7 @@ class TrainingJob:
         trainer.train(resume_from_checkpoint=str(self._config.resume_from_checkpoint) if self._config.resume_from_checkpoint else None)
         self._strategy.save_model(trainer, tokenizer, self._training_run.model_dir)
         self._training_run.save_state(trainer)
-        TrainingCurveReport().render(self._training_run.root_dir)
+        TrainingCurveVisualizer().render(self._training_run.root_dir)
 
     def _to_hf_dataset(self, records: list[Any], tokenizer: Any) -> Dataset:
         """将标准分类记录 token 化为 Transformers Trainer 可消费的数据集。"""
