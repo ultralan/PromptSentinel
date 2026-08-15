@@ -20,3 +20,6 @@ candidates:
   - name: lora_seed_42
     artifact_type: lora_adapter
     path: runs/20260813T010128Z-prompt-sentinel-lora-seed-42/model
+  - name: lora_seed_2024
+    artifact_type: lora_adapter
+    path: runs/20260814T084748Z-prompt-sentinel-lora-seed-2024/model
