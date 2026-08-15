@@ -78,7 +78,7 @@ class TrainingRun:
     @property
     def log_path(self) -> Path:
         """返回与 checkpoint、配置快照同目录的训练日志路径。"""
-        return self.root_dir / "train.log"
+        return self.root_dir / "execution.log"
 
     @property
     def is_resuming(self) -> bool:

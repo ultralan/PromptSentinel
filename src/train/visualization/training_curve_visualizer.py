@@ -26,11 +26,11 @@ class TrainingCurveVisualizer:
         if not train_points:
             raise ValueError(f"Trainer 状态不包含训练 loss: {state_path}")
 
-        reports_dir = run_dir / "plots"
-        reports_dir.mkdir(parents=True, exist_ok=True)
-        output_path = reports_dir / "loss_curve.png"
+        visualization_dir = run_dir / "visualizations"
+        visualization_dir.mkdir(parents=True, exist_ok=True)
+        output_path = visualization_dir / "loss_curve.png"
         self._plot(train_points, validation_points, output_path)
-        (reports_dir / "loss_curve.json").write_text(
+        (visualization_dir / "loss_curve.json").write_text(
             json.dumps(
                 {
                     "source": str(state_path),

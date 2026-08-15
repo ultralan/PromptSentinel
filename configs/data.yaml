@@ -16,7 +16,7 @@ model:
 paths:
   raw_dir: data/raw/promptshield
   prepared_dir: data/prepared/promptshield
-  reports_dir: data/reports
+  output_dir: outputs/preprocess/promptshield
 
 preparation:
   max_overlength_ratio: 0.20

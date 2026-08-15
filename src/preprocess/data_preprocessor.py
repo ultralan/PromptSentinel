@@ -37,7 +37,7 @@ class DataPreprocessor:
         raw_records = self._source.load(raw_paths)
         measured_records = self._measure_token_lengths(raw_records)
         audit = self._build_audit(raw_paths, raw_records, measured_records)
-        audit_path = self._config.paths.reports_dir / "length_audit.json"
+        audit_path = self._config.paths.output_dir / "length_audit.json"
         audit_path.parent.mkdir(parents=True, exist_ok=True)
         audit_path.write_text(self._to_json(audit), encoding="utf-8")
         self._assert_split_isolation(audit)

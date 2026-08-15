@@ -20,8 +20,8 @@ def main() -> None:
     parser = argparse.ArgumentParser(description="下载并预处理 PromptShield")
     parser.add_argument("--config", required=True)
     args = parser.parse_args()
-    with ExecutionLog(PROJECT_ROOT / "logs" / "preprocess" / "execution.log"):
-        config = DataConfig.from_yaml(Path(args.config), PROJECT_ROOT)
+    config = DataConfig.from_yaml(Path(args.config), PROJECT_ROOT)
+    with ExecutionLog(config.paths.output_dir / "execution.log"):
         source = PromptShieldDataset(config.dataset, config.paths.raw_dir)
         prepared = PreparedDataset(config.paths.prepared_dir)
         DataPreprocessor(config, source, prepared).run()

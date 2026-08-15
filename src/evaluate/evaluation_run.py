@@ -28,7 +28,7 @@ class EvaluationRun:
     @property
     def log_path(self) -> Path:
         """返回与评测产物同目录的执行日志路径。"""
-        return self.root_dir / "test.log"
+        return self.root_dir / "execution.log"
 
     def create_root_dir(self) -> None:
         """在加载模型前创建唯一评测目录，使首行日志归属本次运行。"""

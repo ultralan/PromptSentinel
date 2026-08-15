@@ -3,7 +3,7 @@ data_config: configs/data.yaml
 run:
   mode: lora
   seed: 42
-  output_root: runs
+  output_root: outputs/train
   run_name: prompt-sentinel-lora-seed-42
 
 model:

@@ -7,7 +7,7 @@
 ```text
 configs/       可提交的实验配置
 data/          本地原始数据、训练 manifest 和长度审计报告
-runs/          每次训练的模型、日志和复现快照（不提交）
+outputs/       预处理、训练和评估的全部运行产物（不提交）
 src/core/       配置 dataclass、数据实体和训练枚举
 src/preprocess/ PromptShield 原始数据与 prepared 数据集的对象编排
 src/train/      模型训练器抽象、具体模型加载、训练策略、运行产物和训练任务对象
@@ -27,9 +27,9 @@ uv run python -m src.evaluate.main --config configs/evaluate.yaml
 
 `prepare_data` 会下载 PromptShield 的固定 revision，检查 split 泄漏，并按当前配置的模型 tokenizer 生成长度审计。若 `train` 或 `validation` 的超长样本占比高于配置门槛，命令会停止，不会静默修改训练语义。
 
-训练和测试的终端输出、第三方库日志和异常堆栈会与各自的配置快照和结果一起写入 `runs/<运行标识>/`。预处理日志写入 `logs/preprocess/execution.log`。
+所有模块统一写入 `outputs/`：预处理审计与日志位于 `outputs/preprocess/promptshield/`，训练运行位于 `outputs/train/<运行标识>/`，评估运行位于 `outputs/evaluate/<运行标识>/`。每次训练或评估的终端输出、第三方库日志和异常堆栈统一命名为 `execution.log`，与该次运行的配置、模型或指标放在同一目录。
 
-训练成功后，`TrainingJob` 会调用 `TrainingCurveVisualizer` 读取刚落盘的 `trainer_state.json`，在对应运行目录写入 `plots/loss_curve.png` 和 `plots/loss_curve.json`；可视化过程不修改模型、checkpoint 或训练状态。
+训练成功后，`TrainingJob` 会调用 `TrainingCurveVisualizer` 读取刚落盘的 `trainer_state.json`，在对应运行目录写入 `visualizations/loss_curve.png` 和 `visualizations/loss_curve.json`；可视化过程不修改模型、checkpoint 或训练状态。
 
 评估统一在 validation 的良性样本上校准目标 FPR 阈值，随后固定该阈值在独立官方 test split 上比较所有候选。每次评估保存 `metrics.json`（AUC-ROC、AP、FPR、Recall 与混淆矩阵）和每个候选的逐样本 `predictions/*.jsonl`。`configs/evaluate.yaml` 默认比较基座和当前 LoRA adapter；加入完整微调结果时只需增加一个 `full_fine_tuned` 候选。
 

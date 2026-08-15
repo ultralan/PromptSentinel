@@ -66,10 +66,10 @@ class DatasetConfig:
 
 @dataclass(frozen=True)
 class DataPaths:
-    """原始数据、prepared 数据与审计报告的本地目录。"""
+    """原始数据、prepared 数据与预处理运行产物的本地目录。"""
     raw_dir: Path
     prepared_dir: Path
-    reports_dir: Path
+    output_dir: Path
 
 
 @dataclass(frozen=True)
@@ -99,7 +99,7 @@ class DataConfig:
             paths=DataPaths(
                 raw_dir=_resolve(str(paths["raw_dir"]), project_root),
                 prepared_dir=_resolve(str(paths["prepared_dir"]), project_root),
-                reports_dir=_resolve(str(paths["reports_dir"]), project_root),
+                output_dir=_resolve(str(paths["output_dir"]), project_root),
             ),
             preparation=PreparationConfig(
                 max_overlength_ratio=float(preparation["max_overlength_ratio"]),
