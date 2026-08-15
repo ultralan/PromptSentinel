@@ -173,6 +173,26 @@ class TrainerConfig:
 
 
 @dataclass(frozen=True)
+class PreparedTrainingDataConfig:
+    """训练配置固定的 prepared train、validation 文件内容指纹。"""
+
+    train_sha256: str
+    validation_sha256: str
+
+    @classmethod
+    def from_mapping(cls, data: dict[str, Any]) -> "PreparedTrainingDataConfig":
+        """解析并校验两个训练 split 的 SHA-256。"""
+        values = {
+            "train_sha256": str(data["train_sha256"]),
+            "validation_sha256": str(data["validation_sha256"]),
+        }
+        for name, value in values.items():
+            if len(value) != 64 or any(character not in "0123456789abcdef" for character in value):
+                raise ValueError(f"prepared_data.{name} 必须是小写 SHA-256")
+        return cls(**values)
+
+
+@dataclass(frozen=True)
 class TrainingConfig:
     """训练模块运行所需的模型、策略、训练和运行配置。"""
     data_config_path: Path
@@ -181,6 +201,7 @@ class TrainingConfig:
     trainer: TrainerConfig
     lora: LoraConfig | None
     resume_from_checkpoint: Path | None
+    prepared_data: PreparedTrainingDataConfig
 
     @classmethod
     def from_yaml(cls, path: Path, project_root: Path) -> "TrainingConfig":
@@ -206,6 +227,7 @@ class TrainingConfig:
             resume_from_checkpoint=(
                 _resolve(raw_resume_path, project_root) if raw_resume_path is not None else None
             ),
+            prepared_data=PreparedTrainingDataConfig.from_mapping(data["prepared_data"]),
         )
 
 

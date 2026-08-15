@@ -2,6 +2,7 @@
 
 from __future__ import annotations
 
+import hashlib
 import json
 from pathlib import Path
 
@@ -45,6 +46,18 @@ class PreparedDataset:
     def load_test_split(self) -> list[ClassificationRecord]:
         """读取独立 test 标准记录，仅供评测模块消费。"""
         return self._load_split(DatasetSplit.TEST)
+
+    def split_sha256(self, split: DatasetSplit) -> str:
+        """计算 manifest 声明的单个 prepared split 文件 SHA-256。"""
+        manifest = self.load_manifest()
+        metadata = manifest.splits.get(split)
+        if metadata is None:
+            raise ValueError(f"prepared manifest 不包含 {split.value}")
+        digest = hashlib.sha256()
+        with (self._root_dir / metadata.path).open("rb") as handle:
+            for chunk in iter(lambda: handle.read(1024 * 1024), b""):
+                digest.update(chunk)
+        return digest.hexdigest()
 
     def _load_split(self, split: DatasetSplit) -> list[ClassificationRecord]:
         """读取并校验 manifest 中声明的任一标准 split。"""

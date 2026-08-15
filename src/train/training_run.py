@@ -41,7 +41,14 @@ class TrainingRun:
         if not self.root_dir.is_dir():
             raise RuntimeError(f"恢复运行目录不存在: {self.root_dir}")
 
-    def initialize(self, data_config: DataConfig, parameter_summary: dict[str, int], dataset_sizes: dict[str, int], device: str) -> None:
+    def initialize(
+        self,
+        data_config: DataConfig,
+        parameter_summary: dict[str, int],
+        dataset_sizes: dict[str, int],
+        device: str,
+        prepared_data_sha256: dict[str, str],
+    ) -> None:
         """持久化配置、环境、参数量和样本数。"""
         if not self.root_dir.is_dir():
             raise RuntimeError(f"训练运行目录尚未创建: {self.root_dir}")
@@ -51,6 +58,7 @@ class TrainingRun:
             {
                 "parameters": parameter_summary,
                 "datasets": dataset_sizes,
+                "prepared_data_sha256": prepared_data_sha256,
                 "device": device,
                 "python": sys.version,
                 "platform": platform.platform(),

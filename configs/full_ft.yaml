@@ -1,5 +1,9 @@
 data_config: configs/data.yaml
 
+prepared_data:
+  train_sha256: 2b45b48e2b5f0a64ea7fe82dc13082d6dfea72ae8c23a6cbe820dafe23f0cd8f
+  validation_sha256: e87576a9d28262e6fdbffbb47c6a2a005cc826f829d2873dcc2a680d288d269e
+
 run:
   mode: full_ft
   seed: 42

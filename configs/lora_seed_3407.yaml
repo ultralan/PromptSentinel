@@ -6,9 +6,9 @@ prepared_data:
 
 run:
   mode: lora
-  seed: 42
+  seed: 3407
   output_root: outputs/train
-  run_name: prompt-sentinel-lora-seed-42
+  run_name: prompt-sentinel-lora-seed-3407
 
 model:
   implementation: protect_ai_deberta_v2

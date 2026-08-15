@@ -40,6 +40,7 @@ class TrainingJob:
         manifest = self._prepared_dataset.load_manifest()
         if manifest.max_length != self._config.model.max_length:
             raise ValueError("prepared manifest 与训练模型的 max_length 不一致")
+        prepared_data_sha256 = self._validate_prepared_data()
         TrainingRun.set_seed(self._config.run.seed)
         tokenizer = self._model_trainer.load_tokenizer()
         base_model = self._model_trainer.load_base_model()
@@ -52,6 +53,7 @@ class TrainingJob:
             self._parameter_summary(model),
             {"train": len(train_dataset), "validation": len(validation_dataset)},
             device,
+            prepared_data_sha256,
         )
         trainer = self._model_trainer.create_trainer(
             model, tokenizer, train_dataset, validation_dataset, self._training_run.checkpoint_dir, device,
@@ -60,6 +62,20 @@ class TrainingJob:
         self._strategy.save_model(trainer, tokenizer, self._training_run.model_dir)
         self._training_run.save_state(trainer)
         TrainingCurveVisualizer().render(self._training_run.root_dir)
+
+    def _validate_prepared_data(self) -> dict[str, str]:
+        """校验训练 split 内容未偏离配置中冻结的 SHA-256。"""
+        actual = {
+            "train": self._prepared_dataset.split_sha256(DatasetSplit.TRAIN),
+            "validation": self._prepared_dataset.split_sha256(DatasetSplit.VALIDATION),
+        }
+        expected = {
+            "train": self._config.prepared_data.train_sha256,
+            "validation": self._config.prepared_data.validation_sha256,
+        }
+        if actual != expected:
+            raise ValueError(f"prepared 训练数据内容指纹不一致: expected={expected}, actual={actual}")
+        return actual
 
     def _to_hf_dataset(self, records: list[Any], tokenizer: Any) -> Dataset:
         """将标准分类记录 token 化为 Transformers Trainer 可消费的数据集。"""
