@@ -55,7 +55,7 @@ class TrainingJob:
         trainer = self._model_trainer.create_trainer(
             model, tokenizer, train_dataset, validation_dataset, self._training_run.checkpoint_dir, device,
         )
-        trainer.train()
+        trainer.train(resume_from_checkpoint=str(self._config.resume_from_checkpoint) if self._config.resume_from_checkpoint else None)
         self._strategy.save_model(trainer, tokenizer, self._training_run.model_dir)
         self._training_run.save_state(trainer)
 

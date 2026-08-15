@@ -23,13 +23,23 @@ class TrainingRun:
 
     def __init__(self, config: TrainingConfig) -> None:
         """根据运行配置生成唯一的 UTC 时间戳产物目录。"""
-        timestamp = datetime.now(timezone.utc).strftime("%Y%m%dT%H%M%SZ")
-        self.root_dir = config.run.output_root / f"{timestamp}-{config.run.run_name}"
         self._config = config
+        if config.resume_from_checkpoint is None:
+            timestamp = datetime.now(timezone.utc).strftime("%Y%m%dT%H%M%SZ")
+            self.root_dir = config.run.output_root / f"{timestamp}-{config.run.run_name}"
+        else:
+            self.root_dir = config.resume_from_checkpoint.parent.parent
 
     def create_root_dir(self) -> None:
         """在模型加载前创建唯一运行目录，使首行日志也归属本次运行。"""
-        self.root_dir.mkdir(parents=True, exist_ok=False)
+        if self._config.resume_from_checkpoint is None:
+            self.root_dir.mkdir(parents=True, exist_ok=False)
+            return
+        checkpoint = self._config.resume_from_checkpoint
+        if not checkpoint.is_dir() or checkpoint.parent != self.checkpoint_dir:
+            raise ValueError(f"恢复 checkpoint 不属于合法运行目录: {checkpoint}")
+        if not self.root_dir.is_dir():
+            raise RuntimeError(f"恢复运行目录不存在: {self.root_dir}")
 
     def initialize(self, data_config: DataConfig, parameter_summary: dict[str, int], dataset_sizes: dict[str, int], device: str) -> None:
         """持久化配置、环境、参数量和样本数。"""
@@ -49,6 +59,11 @@ class TrainingRun:
             },
             self.root_dir / "run_metadata.json",
         )
+        if self._config.resume_from_checkpoint is not None:
+            self._write_json(
+                {"resumed_from_checkpoint": str(self._config.resume_from_checkpoint)},
+                self.root_dir / "resume.json",
+            )
 
     @property
     def checkpoint_dir(self) -> Path:
@@ -64,6 +79,11 @@ class TrainingRun:
     def log_path(self) -> Path:
         """返回与 checkpoint、配置快照同目录的训练日志路径。"""
         return self.root_dir / "train.log"
+
+    @property
+    def is_resuming(self) -> bool:
+        """标识当前运行是否从已有 checkpoint 恢复。"""
+        return self._config.resume_from_checkpoint is not None
 
     def save_state(self, trainer: Any) -> None:
         """保存 Transformers Trainer 状态，支持中断后追溯。"""

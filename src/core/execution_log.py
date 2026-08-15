@@ -12,9 +12,10 @@ from typing import TextIO
 class ExecutionLog:
     """捕获标准输出、标准错误和 Python 日志到单个模块执行日志文件。"""
 
-    def __init__(self, path: Path) -> None:
-        """绑定调用方确定的单次执行日志文件路径。"""
+    def __init__(self, path: Path, append: bool = False) -> None:
+        """绑定调用方确定的单次执行日志文件路径，并按需追加恢复日志。"""
         self.path = path
+        self._append = append
         self._handle: TextIO | None = None
         self._stdout_redirect = None
         self._stderr_redirect = None
@@ -24,7 +25,7 @@ class ExecutionLog:
     def __enter__(self) -> "ExecutionLog":
         """开始重定向本进程输出并记录日志会话开始时间。"""
         self.path.parent.mkdir(parents=True, exist_ok=True)
-        self._handle = self.path.open("w", encoding="utf-8", buffering=1)
+        self._handle = self.path.open("a" if self._append else "w", encoding="utf-8", buffering=1)
         self._stdout_redirect = redirect_stdout(self._handle)
         self._stderr_redirect = redirect_stderr(self._handle)
         self._stdout_redirect.__enter__()

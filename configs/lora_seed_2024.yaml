@@ -6,6 +6,8 @@ run:
   output_root: runs
   run_name: prompt-sentinel-lora-seed-2024
 
+resume_from_checkpoint: runs/20260814T084748Z-prompt-sentinel-lora-seed-2024/checkpoints/checkpoint-1123
+
 model:
   implementation: protect_ai_deberta_v2
   name_or_path: protectai/deberta-v3-base-prompt-injection-v2

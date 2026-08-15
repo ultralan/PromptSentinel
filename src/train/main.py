@@ -25,7 +25,7 @@ def main() -> None:
     training_config = TrainingConfig.from_yaml(Path(args.config), PROJECT_ROOT)
     training_run = TrainingRun(training_config)
     training_run.create_root_dir()
-    with ExecutionLog(training_run.log_path):
+    with ExecutionLog(training_run.log_path, append=training_run.is_resuming):
         data_config = DataConfig.from_yaml(training_config.data_config_path, PROJECT_ROOT)
         job = TrainingJob(
             training_config,

@@ -180,6 +180,7 @@ class TrainingConfig:
     model: ModelConfig
     trainer: TrainerConfig
     lora: LoraConfig | None
+    resume_from_checkpoint: Path | None
 
     @classmethod
     def from_yaml(cls, path: Path, project_root: Path) -> "TrainingConfig":
@@ -188,6 +189,9 @@ class TrainingConfig:
         run = data["run"]
         mode = TrainingMode(str(run["mode"]))
         lora = LoraConfig.from_mapping(data["lora"]) if mode is TrainingMode.LORA else None
+        raw_resume_path = data.get("resume_from_checkpoint")
+        if raw_resume_path is not None and (not isinstance(raw_resume_path, str) or not raw_resume_path.strip()):
+            raise ValueError("resume_from_checkpoint 必须是非空路径字符串")
         return cls(
             data_config_path=_resolve(str(data["data_config"]), project_root),
             run=RunConfig(
@@ -199,6 +203,9 @@ class TrainingConfig:
             model=ModelConfig.from_mapping(data["model"]),
             trainer=TrainerConfig.from_mapping(data["training"]),
             lora=lora,
+            resume_from_checkpoint=(
+                _resolve(raw_resume_path, project_root) if raw_resume_path is not None else None
+            ),
         )
 
 
