@@ -8,6 +8,7 @@ from pathlib import Path
 from src.core.config_entity import DataConfig, EvaluationCandidateConfig, EvaluationConfig
 from src.core.data_entity import ClassificationRecord, DatasetSplit
 from src.preprocess.prepared_dataset import PreparedDataset
+from src.evaluate.evaluation_cache import EvaluationCache
 from src.evaluate.evaluation_run import EvaluationRun
 from src.evaluate.metrics import BinaryMetrics
 from src.evaluate.model_evaluator import ModelEvaluator
@@ -46,7 +47,24 @@ class EvaluationJob:
             {"validation": len(validation_records), "test": len(test_records)},
             self._model_trainer.select_device(),
         )
-        reports = [self._evaluate_candidate(candidate, validation_records, test_records) for candidate in self._config.candidates]
+        cache = EvaluationCache(self._config, validation_records, test_records, self._evaluation_run.root_dir)
+        reports = []
+        for candidate in self._config.candidates:
+            cache_key = cache.candidate_key(candidate)
+            cached = cache.find(cache_key)
+            if cached is None:
+                report = EvaluationCache.mark_computed(
+                    self._evaluate_candidate(candidate, validation_records, test_records),
+                    cache_key,
+                )
+            else:
+                report = cache.restore(
+                    cached,
+                    candidate,
+                    self._evaluation_run.predictions_path(candidate.name),
+                )
+            self._evaluation_run.write_json(report, f"candidate_metrics/{candidate.name}.json")
+            reports.append(report)
         self._evaluation_run.write_json(
             {
                 "threshold_source": "prepared validation split 的良性样本",

@@ -33,4 +33,6 @@ uv run python -m src.evaluate.main --config configs/evaluate.yaml
 
 评估统一在 validation 的良性样本上校准目标 FPR 阈值，随后固定该阈值在独立官方 test split 上比较所有候选。每次评估保存 `metrics.json`（AUC-ROC、AP、FPR、Recall 与混淆矩阵）和每个候选的逐样本 `predictions/*.jsonl`。`configs/evaluate.yaml` 默认比较基座和当前 LoRA adapter；加入完整微调结果时只需增加一个 `full_fine_tuned` 候选。
 
+评估会根据 prepared 数据内容、评估口径、基座固定 revision 和候选权重内容生成缓存键。历史运行中存在完全一致的 `candidate_metrics` 与预测文件时，当前运行直接复制并汇总结果，不再重复加载模型或执行推理；任一数据、阈值口径、模型 revision 或权重内容变化都会自动失效缓存。
+
 当前默认的 Protect AI 基座为开放模型。Meta Prompt Guard 2 仍保留为可选实现；恢复访问后只需切换 YAML 的 `model.implementation`、`name_or_path` 和 `revision`。
