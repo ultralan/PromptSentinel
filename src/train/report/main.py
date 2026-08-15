@@ -1,11 +1,11 @@
-"""报告模块启动入口。"""
+"""训练运行报告的独立重渲染入口。"""
 
 import argparse
 import logging
 from pathlib import Path
 
 from src.core.execution_log import ExecutionLog
-from src.report.training_curve_report import TrainingCurveReport
+from src.train.report.training_curve_report import TrainingCurveReport
 
 
 def main() -> None:

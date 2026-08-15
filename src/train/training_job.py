@@ -11,6 +11,7 @@ from src.core.data_entity import DatasetSplit
 from src.preprocess.prepared_dataset import PreparedDataset
 from src.train.fine_tuning.fine_tuning_strategy import FineTuningStrategy
 from src.train.model_trainer.sequence_classification_trainer import SequenceClassificationTrainer
+from src.train.report.training_curve_report import TrainingCurveReport
 from src.train.training_run import TrainingRun
 
 
@@ -35,7 +36,7 @@ class TrainingJob:
         self._training_run = training_run
 
     def run(self) -> None:
-        """校验 prepared 契约，训练模型并保存策略定义的产物。"""
+        """校验 prepared 契约，训练、保存模型并生成当前运行的损失曲线。"""
         manifest = self._prepared_dataset.load_manifest()
         if manifest.max_length != self._config.model.max_length:
             raise ValueError("prepared manifest 与训练模型的 max_length 不一致")
@@ -58,6 +59,7 @@ class TrainingJob:
         trainer.train(resume_from_checkpoint=str(self._config.resume_from_checkpoint) if self._config.resume_from_checkpoint else None)
         self._strategy.save_model(trainer, tokenizer, self._training_run.model_dir)
         self._training_run.save_state(trainer)
+        TrainingCurveReport().render(self._training_run.root_dir)
 
     def _to_hf_dataset(self, records: list[Any], tokenizer: Any) -> Dataset:
         """将标准分类记录 token 化为 Transformers Trainer 可消费的数据集。"""
