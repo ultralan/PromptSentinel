@@ -41,6 +41,7 @@ class TrainingRun:
             raise ValueError(f"恢复 checkpoint 不属于合法运行目录: {checkpoint}")
         if not self.root_dir.is_dir():
             raise RuntimeError(f"恢复运行目录不存在: {self.root_dir}")
+        self._relocate_best_model_checkpoint(checkpoint)
 
     def initialize(
         self,
@@ -117,6 +118,23 @@ class TrainingRun:
         )
         self._write_json(metadata, metadata_path)
 
+    def mark_interrupted(self) -> None:
+        """在训练被人工中断时记录安全恢复点和中断时间。"""
+        metadata_path = self.root_dir / "run_metadata.json"
+        if not metadata_path.is_file():
+            return
+        interrupted_at = datetime.now(timezone.utc)
+        metadata = json.loads(metadata_path.read_text(encoding="utf-8"))
+        latest_checkpoint = self._latest_checkpoint()
+        metadata.update(
+            {
+                "status": "interrupted",
+                "interrupted_at": interrupted_at.isoformat(),
+                "resume_checkpoint": str(latest_checkpoint) if latest_checkpoint is not None else None,
+            }
+        )
+        self._write_json(metadata, metadata_path)
+
     @staticmethod
     def set_seed(seed: int) -> None:
         """统一设置 Python、NumPy、PyTorch 的训练随机种子。"""
@@ -130,3 +148,32 @@ class TrainingRun:
     def _write_json(data: Any, path: Path) -> None:
         """以 UTF-8 格式化 JSON 写入单次运行元数据文件。"""
         path.write_text(json.dumps(data, ensure_ascii=False, indent=2, default=str) + "\n", encoding="utf-8")
+
+    def _relocate_best_model_checkpoint(self, checkpoint: Path) -> None:
+        """将 Trainer 状态中的旧机器绝对路径重定位到当前运行目录。"""
+        state_path = checkpoint / "trainer_state.json"
+        if not state_path.is_file():
+            raise FileNotFoundError(f"恢复 checkpoint 缺少 trainer_state.json: {checkpoint}")
+        state = json.loads(state_path.read_text(encoding="utf-8"))
+        raw_best_checkpoint = state.get("best_model_checkpoint")
+        if not raw_best_checkpoint:
+            return
+        best_checkpoint = Path(raw_best_checkpoint)
+        if best_checkpoint.is_dir():
+            return
+        relocated_checkpoint = self.checkpoint_dir / best_checkpoint.name
+        if not relocated_checkpoint.is_dir():
+            raise FileNotFoundError(
+                f"Trainer 最优 checkpoint 在旧路径和当前运行目录中均不存在: {raw_best_checkpoint}"
+            )
+        state["best_model_checkpoint"] = str(relocated_checkpoint.resolve())
+        self._write_json(state, state_path)
+
+    def _latest_checkpoint(self) -> Path | None:
+        """返回当前运行中 global step 最大的完整 checkpoint 目录。"""
+        checkpoints = [
+            path
+            for path in self.checkpoint_dir.glob("checkpoint-*")
+            if path.is_dir() and path.name.removeprefix("checkpoint-").isdigit()
+        ]
+        return max(checkpoints, key=lambda path: int(path.name.removeprefix("checkpoint-")), default=None)

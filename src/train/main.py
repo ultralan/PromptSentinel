@@ -35,7 +35,11 @@ def main() -> None:
             FineTuningStrategyFactory.create(training_config),
             training_run,
         )
-        job.run()
+        try:
+            job.run()
+        except KeyboardInterrupt:
+            training_run.mark_interrupted()
+            raise
 
 
 if __name__ == "__main__":
