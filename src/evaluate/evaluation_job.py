@@ -4,6 +4,7 @@ from __future__ import annotations
 
 import json
 from pathlib import Path
+from statistics import mean, stdev
 
 from src.core.config_entity import DataConfig, EvaluationCandidateConfig, EvaluationConfig
 from src.core.data_entity import ClassificationRecord, DatasetSplit
@@ -72,6 +73,7 @@ class EvaluationJob:
                 "test_source": "prepared test split",
                 "primary_metric": "Recall@1% sample-FPR（阈值由 test 良性样本确定）",
                 "candidates": reports,
+                "strategy_summary": self._summarize_strategies(reports),
             },
             "metrics.json",
         )
@@ -114,6 +116,39 @@ class EvaluationJob:
             "test": test_metrics.to_dict(),
             "test_at_target_fpr": test_at_target_fpr.to_dict(),
         }
+
+    @staticmethod
+    def _summarize_strategies(reports: list[dict]) -> dict:
+        """按 LoRA 与 Full FT 汇总共同随机种子的均值和样本标准差。"""
+        groups = {
+            "lora": [report for report in reports if report["name"].startswith("lora_seed_")],
+            "full_ft": [report for report in reports if report["name"].startswith("full_ft_seed_")],
+        }
+        summary = {}
+        for strategy, strategy_reports in groups.items():
+            if not strategy_reports:
+                continue
+            values = {
+                "roc_auc": [report["test"]["auc_roc"] for report in strategy_reports],
+                "average_precision": [report["test"]["average_precision"] for report in strategy_reports],
+                "recall_at_target_fpr": [report["test_at_target_fpr"]["recall"] for report in strategy_reports],
+                "realized_false_positive_rate": [
+                    report["test_at_target_fpr"]["false_positive_rate"] for report in strategy_reports
+                ],
+            }
+            summary[strategy] = {
+                "seed_count": len(strategy_reports),
+                "metrics": {
+                    metric: {
+                        "mean": mean(metric_values),
+                        "sample_standard_deviation": stdev(metric_values) if len(metric_values) > 1 else 0.0,
+                        "minimum": min(metric_values),
+                        "maximum": max(metric_values),
+                    }
+                    for metric, metric_values in values.items()
+                },
+            }
+        return summary
 
     def _write_predictions(
         self,
