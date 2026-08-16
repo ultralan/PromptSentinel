@@ -11,6 +11,7 @@ import torch
 from transformers import DataCollatorWithPadding, EarlyStoppingCallback, Trainer, TrainingArguments
 
 from src.core.config_entity import ModelConfig, TrainerConfig
+from src.core.training_entity import MixedPrecision
 
 
 class SequenceClassificationTrainer(ABC):
@@ -44,6 +45,7 @@ class SequenceClassificationTrainer(ABC):
         if self._trainer_config is None:
             raise RuntimeError("评测加载器不能创建 Transformers Trainer")
         config = self._trainer_config
+        self._validate_mixed_precision(config.mixed_precision, device)
         total_steps = self._total_optimization_steps(train_dataset)
         arguments = TrainingArguments(
             output_dir=str(checkpoint_dir),
@@ -62,8 +64,8 @@ class SequenceClassificationTrainer(ABC):
             greater_is_better=False,
             save_total_limit=config.save_total_limit,
             report_to="none",
-            fp16=False,
-            bf16=False,
+            fp16=config.mixed_precision is MixedPrecision.FP16,
+            bf16=config.mixed_precision is MixedPrecision.BF16,
             optim="adamw_torch",
         )
         return Trainer(
@@ -74,6 +76,12 @@ class SequenceClassificationTrainer(ABC):
             data_collator=DataCollatorWithPadding(tokenizer=tokenizer),
             callbacks=[EarlyStoppingCallback(early_stopping_patience=config.early_stopping_patience)],
         )
+
+    @staticmethod
+    def _validate_mixed_precision(mixed_precision: MixedPrecision, device: str) -> None:
+        """限制 FP16/BF16 仅在 CUDA 设备上启用，避免 CPU 或 MPS 静默降级。"""
+        if mixed_precision is not MixedPrecision.FP32 and device != "cuda":
+            raise ValueError(f"{mixed_precision.value} 仅支持 CUDA 训练，当前设备为 {device}")
 
     def _total_optimization_steps(self, train_dataset: Any) -> int:
         """按批大小和梯度累积计算当前训练配置的总优化器更新次数。"""

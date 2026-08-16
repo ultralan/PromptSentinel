@@ -11,6 +11,14 @@ class TrainingMode(StrEnum):
     FULL_FT = "full_ft"
 
 
+class MixedPrecision(StrEnum):
+    """训练时模型前向和反向计算使用的浮点精度。"""
+
+    FP32 = "fp32"
+    FP16 = "fp16"
+    BF16 = "bf16"
+
+
 class ModelImplementation(StrEnum):
     """当前工程支持的序列分类模型实现标识。"""
 

@@ -8,7 +8,7 @@ from typing import Any
 
 import yaml
 
-from src.core.training_entity import ModelArtifactType, ModelImplementation, TrainingMode
+from src.core.training_entity import MixedPrecision, ModelArtifactType, ModelImplementation, TrainingMode
 
 
 def _load_mapping(path: Path) -> dict[str, Any]:
@@ -154,6 +154,7 @@ class TrainerConfig:
     logging_steps: int
     save_total_limit: int
     early_stopping_patience: int
+    mixed_precision: MixedPrecision
 
     @classmethod
     def from_mapping(cls, data: dict[str, Any]) -> "TrainerConfig":
@@ -169,6 +170,7 @@ class TrainerConfig:
             logging_steps=int(data["logging_steps"]),
             save_total_limit=int(data["save_total_limit"]),
             early_stopping_patience=int(data["early_stopping_patience"]),
+            mixed_precision=MixedPrecision(str(data.get("mixed_precision", MixedPrecision.FP32))),
         )
 
 
