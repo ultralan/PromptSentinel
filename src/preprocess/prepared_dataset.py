@@ -26,10 +26,11 @@ class PreparedDataset:
         self._root_dir.mkdir(parents=True, exist_ok=True)
         for split, split_records in records.items():
             path = self._root_dir / f"{split.value}.jsonl"
-            with path.open("w", encoding="utf-8") as handle:
+            with path.open("w", encoding="utf-8", newline="\n") as handle:
                 for record in split_records:
                     handle.write(json.dumps(record.to_dict(), ensure_ascii=False) + "\n")
-        self.manifest_path.write_text(json.dumps(manifest.to_dict(), ensure_ascii=False, indent=2) + "\n", encoding="utf-8")
+        with self.manifest_path.open("w", encoding="utf-8", newline="\n") as handle:
+            handle.write(json.dumps(manifest.to_dict(), ensure_ascii=False, indent=2) + "\n")
 
     def load_manifest(self) -> PreparedDatasetManifest:
         """读取并校验 text_classification/v1 manifest。"""
