@@ -11,6 +11,7 @@ from pathlib import Path
 
 from src.core.config_entity import EvaluationCandidateConfig, EvaluationConfig
 from src.core.data_entity import ClassificationRecord
+from src.evaluate.metrics import BinaryMetrics
 
 
 EVALUATION_PROTOCOL_VERSION = "text-classification/v1"
@@ -97,12 +98,26 @@ class EvaluationCache:
                 "cache": {"hit": True, "source_run": str(cached.source_run)},
             }
         )
+        if "test_at_target_fpr" not in report:
+            report["test_at_target_fpr"] = self._calculate_test_at_target_fpr(destination_predictions)
         logging.getLogger(__name__).info(
             "%s 命中评估缓存，跳过模型加载和推理: source=%s",
             candidate.name,
             cached.source_run,
         )
         return report
+
+    def _calculate_test_at_target_fpr(self, predictions_path: Path) -> dict:
+        """从旧缓存的逐样本分数补算当前主指标，避免重复模型推理。"""
+        rows = [json.loads(line) for line in predictions_path.read_text(encoding="utf-8").splitlines()]
+        labels = [int(row["label"]) for row in rows]
+        probabilities = [float(row["risk_probability"]) for row in rows]
+        threshold = BinaryMetrics.calibrate_threshold(
+            labels,
+            probabilities,
+            self._config.evaluation.target_false_positive_rate,
+        )
+        return BinaryMetrics.evaluate(labels, probabilities, threshold).to_dict()
 
     def backfill_run(
         self,

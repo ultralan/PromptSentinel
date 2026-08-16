@@ -62,6 +62,7 @@ class TrainingJob:
         self._strategy.save_model(trainer, tokenizer, self._training_run.model_dir)
         self._training_run.save_state(trainer)
         TrainingCurveVisualizer().render(self._training_run.root_dir)
+        self._training_run.mark_completed()
 
     def _validate_prepared_data(self) -> dict[str, str]:
         """校验训练 split 内容未偏离配置中冻结的 SHA-256。"""

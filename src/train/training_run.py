@@ -24,6 +24,7 @@ class TrainingRun:
     def __init__(self, config: TrainingConfig) -> None:
         """根据运行配置生成唯一的 UTC 时间戳产物目录。"""
         self._config = config
+        self._started_at = datetime.now(timezone.utc)
         if config.resume_from_checkpoint is None:
             timestamp = datetime.now(timezone.utc).strftime("%Y%m%dT%H%M%SZ")
             self.root_dir = config.run.output_root / f"{timestamp}-{config.run.run_name}"
@@ -56,6 +57,10 @@ class TrainingRun:
         self._write_json(asdict(data_config), self.root_dir / "data_config.json")
         self._write_json(
             {
+                "status": "running",
+                "mode": self._config.run.mode.value,
+                "seed": self._config.run.seed,
+                "started_at": self._started_at.isoformat(),
                 "parameters": parameter_summary,
                 "datasets": dataset_sizes,
                 "prepared_data_sha256": prepared_data_sha256,
@@ -97,6 +102,20 @@ class TrainingRun:
         """保存 Transformers Trainer 状态，支持中断后追溯。"""
         trainer.save_state()
         trainer.state.save_to_json(self.root_dir / "trainer_state.json")
+
+    def mark_completed(self) -> None:
+        """在全部训练产物生成后记录完成时间与本次运行耗时。"""
+        metadata_path = self.root_dir / "run_metadata.json"
+        metadata = json.loads(metadata_path.read_text(encoding="utf-8"))
+        finished_at = datetime.now(timezone.utc)
+        metadata.update(
+            {
+                "status": "completed",
+                "finished_at": finished_at.isoformat(),
+                "duration_seconds": (finished_at - self._started_at).total_seconds(),
+            }
+        )
+        self._write_json(metadata, metadata_path)
 
     @staticmethod
     def set_seed(seed: int) -> None:

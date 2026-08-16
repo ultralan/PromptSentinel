@@ -70,6 +70,7 @@ class EvaluationJob:
                 "threshold_source": "prepared validation split 的良性样本",
                 "target_false_positive_rate": self._config.evaluation.target_false_positive_rate,
                 "test_source": "prepared test split",
+                "primary_metric": "Recall@1% sample-FPR（阈值由 test 良性样本确定）",
                 "candidates": reports,
             },
             "metrics.json",
@@ -96,6 +97,14 @@ class EvaluationJob:
         )
         test_scores = self._model_evaluator.predict(tokenizer, model, device, test_records, f"{candidate.name}/test")
         test_metrics = BinaryMetrics.evaluate([record.label for record in test_records], test_scores, threshold)
+        benchmark_threshold = BinaryMetrics.calibrate_threshold(
+            [record.label for record in test_records],
+            test_scores,
+            self._config.evaluation.target_false_positive_rate,
+        )
+        test_at_target_fpr = BinaryMetrics.evaluate(
+            [record.label for record in test_records], test_scores, benchmark_threshold,
+        )
         self._write_predictions(candidate.name, test_records, test_scores, threshold)
         return {
             "name": candidate.name,
@@ -103,6 +112,7 @@ class EvaluationJob:
             "path": str(candidate.path) if candidate.path is not None else None,
             "validation": validation_metrics.to_dict(),
             "test": test_metrics.to_dict(),
+            "test_at_target_fpr": test_at_target_fpr.to_dict(),
         }
 
     def _write_predictions(

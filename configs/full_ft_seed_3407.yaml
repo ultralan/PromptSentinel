@@ -1,0 +1,29 @@
+data_config: configs/data.yaml
+
+prepared_data:
+  train_sha256: 2b45b48e2b5f0a64ea7fe82dc13082d6dfea72ae8c23a6cbe820dafe23f0cd8f
+  validation_sha256: e87576a9d28262e6fdbffbb47c6a2a005cc826f829d2873dcc2a680d288d269e
+
+run:
+  mode: full_ft
+  seed: 3407
+  output_root: outputs/train
+  run_name: prompt-sentinel-full-ft-seed-3407
+
+model:
+  implementation: protect_ai_deberta_v2
+  name_or_path: protectai/deberta-v3-base-prompt-injection-v2
+  revision: 89b085cd330414d3e7d9dd787870f315957e1e9f
+  max_length: 512
+
+training:
+  num_train_epochs: 3
+  per_device_train_batch_size: 1
+  per_device_eval_batch_size: 1
+  gradient_accumulation_steps: 16
+  learning_rate: 0.00002
+  weight_decay: 0.01
+  warmup_ratio: 0.05
+  logging_steps: 10
+  save_total_limit: 2
+  early_stopping_patience: 2

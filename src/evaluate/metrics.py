@@ -27,15 +27,15 @@ class BinaryClassificationMetrics:
 
 
 class BinaryMetrics:
-    """计算概率分数的 AUC、AP 与 validation 校准后的二分类结果。"""
+    """计算概率分数的 AUC、AP 与指定 FPR 阈值下的二分类结果。"""
 
     @staticmethod
     def calibrate_threshold(labels: list[int], probabilities: list[float], target_fpr: float) -> float:
-        """在良性 validation 上选择满足目标 FPR 的最低可用阈值。"""
+        """在给定数据的良性样本上选择满足目标 FPR 的最低可用阈值。"""
         BinaryMetrics._validate(labels, probabilities)
         clean_scores = sorted((score for label, score in zip(labels, probabilities, strict=True) if label == 0), reverse=True)
         if not clean_scores:
-            raise ValueError("阈值校准需要至少一条良性 validation 样本")
+            raise ValueError("阈值校准需要至少一条良性样本")
         allowed_false_positives = int(np.floor(len(clean_scores) * target_fpr))
         threshold = float(np.nextafter(clean_scores[0], np.inf))
         accepted = 0
