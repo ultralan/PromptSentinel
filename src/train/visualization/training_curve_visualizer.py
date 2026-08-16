@@ -16,6 +16,14 @@ import matplotlib.pyplot as plt
 class TrainingCurveVisualizer:
     """只读取单次训练运行，生成可追溯的损失曲线。"""
 
+    _CHINESE_FONT_CANDIDATES = (
+        "Microsoft YaHei",
+        "PingFang SC",
+        "Heiti SC",
+        "Noto Sans CJK SC",
+        "SimHei",
+    )
+
     def render(self, run_dir: Path) -> Path:
         """从 trainer_state.json 提取训练与验证 loss 并写入图像和元数据。"""
         state_path = run_dir / "trainer_state.json"
@@ -68,7 +76,7 @@ class TrainingCurveVisualizer:
         window = min(20, max(1, len(losses) // 20))
         moving_average = [sum(losses[max(0, index - window + 1) : index + 1]) / min(index + 1, window) for index in range(len(losses))]
 
-        font = font_manager.FontProperties(fname="/System/Library/Fonts/STHeiti Light.ttc")
+        font = TrainingCurveVisualizer._resolve_chinese_font()
         figure, axis = plt.subplots(figsize=(10, 5.5), layout="constrained")
         axis.plot(steps, losses, color="#92A8D1", alpha=0.35, linewidth=1, label="训练 loss（原始）")
         axis.plot(steps, moving_average, color="#1F4E79", linewidth=2, label=f"训练 loss（{window} 点滑动均值）")
@@ -88,3 +96,12 @@ class TrainingCurveVisualizer:
         axis.legend(prop=font)
         figure.savefig(output_path, dpi=160)
         plt.close(figure)
+
+    @classmethod
+    def _resolve_chinese_font(cls) -> font_manager.FontProperties:
+        """按系统已安装字体选择中文字体，避免依赖特定操作系统路径。"""
+        installed_font_names = {font.name for font in font_manager.fontManager.ttflist}
+        for font_name in cls._CHINESE_FONT_CANDIDATES:
+            if font_name in installed_font_names:
+                return font_manager.FontProperties(family=font_name)
+        return font_manager.FontProperties()
