@@ -23,19 +23,23 @@ class EvaluationCandidateDiscovery:
         return [self._discover_full_ft_seed(seed) for seed in seeds]
 
     def _discover_full_ft_seed(self, seed: int) -> EvaluationCandidateConfig:
-        """发现一个随机种子对应的最新完整训练运行。"""
+        """发现一个随机种子对应的最新正式完整训练运行。"""
         candidates = []
+        expected_run_name = f"prompt-sentinel-full-ft-seed-{seed}"
         if self._training_output_root.is_dir():
             for run_dir in self._training_output_root.iterdir():
                 metadata_path = run_dir / "run_metadata.json"
+                config_path = run_dir / "config.json"
                 model_dir = run_dir / "model"
-                if not metadata_path.is_file() or not model_dir.is_dir():
+                if not metadata_path.is_file() or not config_path.is_file() or not model_dir.is_dir():
                     continue
                 metadata = json.loads(metadata_path.read_text(encoding="utf-8"))
+                config = json.loads(config_path.read_text(encoding="utf-8"))
                 if (
                     metadata.get("status") == "completed"
                     and metadata.get("mode") == TrainingMode.FULL_FT.value
                     and metadata.get("seed") == seed
+                    and config.get("run", {}).get("run_name") == expected_run_name
                 ):
                     candidates.append((run_dir.name, model_dir))
         if not candidates:
