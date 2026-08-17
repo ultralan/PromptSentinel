@@ -1,0 +1,40 @@
+name: 缺陷报告
+description: 报告可复现的代码、数据处理或评估问题
+title: "[Bug]: "
+labels:
+  - bug
+body:
+  - type: markdown
+    attributes:
+      value: |
+        请勿提交访问令牌、私有数据、系统提示词或可直接造成伤害的敏感攻击载荷。
+  - type: textarea
+    id: summary
+    attributes:
+      label: 问题描述
+      description: 简要说明预期行为与实际行为。
+    validations:
+      required: true
+  - type: textarea
+    id: reproduce
+    attributes:
+      label: 最小复现步骤
+      description: 提供脱敏后的命令、配置和必要输入。
+      placeholder: |
+        1. 使用配置 ...
+        2. 执行命令 ...
+        3. 观察到 ...
+    validations:
+      required: true
+  - type: textarea
+    id: environment
+    attributes:
+      label: 环境信息
+      description: Python、PyTorch、Transformers、PEFT、操作系统和设备信息。
+    validations:
+      required: true
+  - type: textarea
+    id: evidence
+    attributes:
+      label: 相关日志或产物
+      description: 仅粘贴脱敏后的日志、配置 diff 或指标。

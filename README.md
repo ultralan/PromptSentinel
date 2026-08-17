@@ -43,3 +43,49 @@ LoRA 在主指标上比 Full FT 高 **16.14 个百分点**。全部主测试均�
 ## 边界
 
 主结论只覆盖 PromptShield 的逐样本提示注入分类，不能直接推导为真实 RAG、工具 / MCP 返回或端到端 Agent 的防护效果。后续会将 RAG 外部文本和 Agent 场景作为独立专项，分别冻结数据转换、阈值和指标，避免与主结果混算。
+
+## 开源模型
+
+最优的 LoRA seed 2024 adapter 已发布至 Hugging Face：
+[haominglan/PromptSentinel-DeBERTa-LoRA](https://huggingface.co/haominglan/PromptSentinel-DeBERTa-LoRA)。
+该仓库只包含 adapter、分类头与 tokenizer，不重分发基座权重；完整加载方式、许可证和模型边界见其模型卡。
+
+## 复现
+
+环境要求：Python 3.12、[uv](https://docs.astral.sh/uv/)。训练与评估会下载公开的 Hugging Face 模型和数据集。
+
+```bash
+uv sync
+
+# 下载 PromptShield 固定 revision，完成 split 泄漏检查和长度审计。
+uv run python -m src.preprocess.main --config configs/data.yaml
+
+# 训练两条对照路径。
+uv run python -m src.train.main --config configs/lora.yaml
+uv run python -m src.train.main --config configs/full_ft.yaml
+
+# 在固定 PromptShield test 上评估候选。
+uv run python -m src.evaluate.main --config configs/evaluate.yaml
+```
+
+运行产物统一写入 `outputs/`，包括配置快照、训练曲线、checkpoint、逐样本预测、评估指标和执行日志；该目录不会进入 Git。随机种子实验使用 `configs/lora_seed_*.yaml` 与 `configs/full_ft_seed_*.yaml`。
+
+## 目录
+
+```text
+configs/       可提交的训练、数据与评估配置
+data/          本地原始数据、prepared 数据与审计结果（不提交）
+src/core/      跨模块配置、数据实体与训练枚举
+src/preprocess/ 数据下载、校验与 prepared 数据集构建
+src/train/     训练任务、策略对象、模型实现与训练可视化
+src/evaluate/  PromptShield 与能力保持评估
+outputs/       本地运行产物（不提交）
+```
+
+## 贡献与安全
+
+贡献流程见 [CONTRIBUTING.md](CONTRIBUTING.md)，社区行为规范见 [CODE_OF_CONDUCT.md](CODE_OF_CONDUCT.md)。安全问题请遵循 [SECURITY.md](SECURITY.md)，不要在公开 Issue 中披露可复现攻击细节或敏感样本。
+
+## 许可证
+
+本仓库代码以 [Apache-2.0](LICENSE) 发布。训练数据、基座模型和 Hugging Face adapter 分别保留其模型卡、数据集卡和上游许可证要求；本仓库不包含数据集或模型权重。

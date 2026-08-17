@@ -1,0 +1,27 @@
+name: 功能或实验建议
+description: 提议数据、训练、评估或文档改进
+title: "[Proposal]: "
+labels:
+  - enhancement
+body:
+  - type: textarea
+    id: problem
+    attributes:
+      label: 要解决的问题
+      description: 说明当前限制与受影响的使用场景。
+    validations:
+      required: true
+  - type: textarea
+    id: proposal
+    attributes:
+      label: 建议方案
+      description: 说明拟修改的模块、数据或评测口径。
+    validations:
+      required: true
+  - type: textarea
+    id: validation
+    attributes:
+      label: 验证方案
+      description: 说明如何证明改动有效且不破坏既有可复现结论。
+    validations:
+      required: true

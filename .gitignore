@@ -1,9 +1,14 @@
 .DS_Store
 .venv/
+.env
+.env.*
+!.env.example
 __pycache__/
 *.py[cod]
 .pytest_cache/
 .ruff_cache/
+.coverage
+htmlcov/
 
 # 本地下载的数据、预处理结果和分布审计报告不进入版本库。
 data/raw/
