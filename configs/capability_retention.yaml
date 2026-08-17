@@ -1,0 +1,25 @@
+data_config: configs/capability_data.yaml
+
+run:
+  output_root: outputs/evaluate
+  run_name: capability-retention-seed-42
+
+model:
+  implementation: protect_ai_deberta_v2
+  name_or_path: protectai/deberta-v3-base-prompt-injection-v2
+  revision: 89b085cd330414d3e7d9dd787870f315957e1e9f
+  max_length: 512
+
+evaluation:
+  per_device_batch_size: 16
+  target_false_positive_rate: 0.01
+
+candidates:
+  - name: base
+    artifact_type: base
+  - name: lora_seed_42
+    artifact_type: lora_adapter
+    path: outputs/train/20260813T010128Z-prompt-sentinel-lora-seed-42/model
+  - name: full_ft_seed_42
+    artifact_type: full_fine_tuned
+    path: outputs/train/20260816T080133Z-prompt-sentinel-full-ft-seed-42/model

@@ -1,0 +1,20 @@
+dataset:
+  implementation: jailbreak_classification
+  repo_id: jackhhao/jailbreak-classification
+  revision: 2f2ceeb39658696fd3f462403562b6eea5306287
+  files: {}
+
+model:
+  implementation: protect_ai_deberta_v2
+  name_or_path: protectai/deberta-v3-base-prompt-injection-v2
+  revision: 89b085cd330414d3e7d9dd787870f315957e1e9f
+  max_length: 512
+
+paths:
+  raw_dir: data/raw/jailbreak-classification
+  prepared_dir: data/prepared/jailbreak-classification
+  output_dir: outputs/preprocess/jailbreak-classification
+
+preparation:
+  max_overlength_ratio: 1.0
+  overlength_policy: retain
